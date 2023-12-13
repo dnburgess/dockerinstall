@@ -5,6 +5,7 @@ set -o nounset
 IFS=$(printf '\n\t')
 
 # Docker
+apt install sudo -y
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 printf '\nDocker installed successfully\n\n'
