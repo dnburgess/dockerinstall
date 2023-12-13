@@ -36,7 +36,10 @@ Clone the repository:
 ```
 git clone https://github.com/dnburgess/dockerinstall.git
 ```
-
+If you don't have git installed, you can run:
+```
+apt install git
+```
 Change into the new directory:
 ```
 cd dockerinstall
