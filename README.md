@@ -8,6 +8,10 @@ To install the newest versions of Docker and docker compose, simply ssh into you
 ```
 git clone https://github.com/dnburgess/dockerinstall.git
 ```
+If you don't have git installed, you can run:
+```
+apt install git
+```
 
 Change into the new directory:
 ```
