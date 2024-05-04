@@ -87,4 +87,10 @@ done
 
 # Final message
 echo "Installation completed successfully. Check installation_log.txt for details."
+echo ""
+echo "Network IP Information:"
+ip a
+echo ""
+echo "Non-sudo user PUID and PGID: "
+id $new_username
 log "Installation completed successfully."
