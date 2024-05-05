@@ -22,15 +22,24 @@ create_new_user() {
     case $create_user in
         [Yy]* )
             read -p "Enter the username for the new user: " new_username
-            read -s -p "Enter the password for the new user: " new_password
-            echo
+            while true; do
+                read -s -p "Enter the password for the new user: " new_password
+                echo
+                read -s -p "Confirm password: " confirm_password
+                echo
+                if [ "$new_password" != "$confirm_password" ]; then
+                    echo "Passwords do not match. Please try again."
+                else
+                    break
+                fi
+            done
             useradd -m -s /bin/bash "$new_username"
             echo "$new_username:$new_password" | chpasswd
             usermod -aG sudo "$new_username"
             printf '\nNew user created and added to sudoers group\n\n'
             echo "You can now log in with the username $new_username instead of root";;
         * )
-            echo "dbSkipping user creation."
+            echo "Skipping user creation."
             ;;
     esac
 }
