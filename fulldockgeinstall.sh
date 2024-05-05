@@ -79,6 +79,8 @@ for option in "${selected_options[@]}"; do
             printf '\nDocker Compose installed successfully\n\n'
             log "Docker Compose installed.";;
         "dockge" )
+            usermod -aG docker "$new_username"
+            printf '\nNew sudo user added to the docker group\n\n'
             mkdir -p /opt/stacks /opt/dockge
             cd /opt/dockge
             curl https://raw.githubusercontent.com/louislam/dockge/master/compose.yaml --output compose.yaml
