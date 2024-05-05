@@ -77,7 +77,9 @@ for option in "${selected_options[@]}"; do
             sudo chmod +x /usr/local/bin/docker-compose
             sudo curl -L https://raw.githubusercontent.com/docker/compose/${COMPOSE_VERSION}/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
             printf '\nDocker Compose installed successfully\n\n'
-            log "Docker Compose installed.";;
+            log "Docker Compose installed."
+            usermod -aG docker "$new_username"
+            printf '\nNew sudo user added to the docker group\n\n';;
         "portainer" )
             docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
             printf '\nPortainer installed successfully\n\n'
