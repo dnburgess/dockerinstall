@@ -1,107 +1,56 @@
 #!/bin/bash
 
-set -e
+# Run system updates
+apt-get update
+apt-get upgrade -y
 
-# Function to prompt the user with a checkbox
-prompt_checkbox() {
-    options=("$@")
-    selected=()
-    for (( i=0; i<${#options[@]}; i++ )); do
-        read -p "Install ${options[$i]}? (yes/no): " yn
-        case $yn in
-            [Yy]* ) selected+=("${options[$i]}");;
-            * ) ;;
-        esac
+# Install curl
+apt-get install -y curl
+
+# Ask if the user wants to install sudo
+read -p "Do you want to install sudo? (y/n) " install_sudo
+if [[ $install_sudo =~ ^[Yy]$ ]]; then
+    apt-get install -y sudo
+fi
+
+# Ask if the user wants to install Docker
+read -p "Do you want to install Docker? (y/n) " install_docker
+if [[ $install_docker =~ ^[Yy]$ ]]; then
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+fi
+
+# Ask if the user wants to install Docker Compose
+read -p "Do you want to install Docker Compose? (y/n) " install_compose
+if [[ $install_compose =~ ^[Yy]$ ]]; then
+    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+fi
+
+# Ask if the user wants to install Portainer
+read -p "Do you want to install Portainer? (y/n) " install_portainer
+if [[ $install_portainer =~ ^[Yy]$ ]]; then
+    docker volume create portainer_data
+    docker run -d -p 8000:8000 -p 9443:9443 --name=portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
+fi
+
+# Ask if the user wants to create a new sudo user
+read -p "Do you want to create a new sudo user? (y/n) " create_user
+if [[ $create_user =~ ^[Yy]$ ]]; then
+    read -p "Enter the desired username: " username
+    while true; do
+        read -s -p "Enter the password: " password
+        echo
+        read -s -p "Confirm the password: " password_confirm
+        echo
+        if [[ $password == $password_confirm ]]; then
+            break
+        else
+            echo "Passwords do not match. Please try again."
+        fi
     done
-    echo "${selected[@]}"
-}
-
-# Function to prompt the user to create a new user
-create_new_user() {
-    read -p "Do you want to create an additional user with sudo privileges? (yes/no): " create_user
-    case $create_user in
-        [Yy]* )
-            read -p "Enter the username for the new user: " new_username
-            while true; do
-                read -s -p "Enter the password for the new user: " new_password
-                echo
-                read -s -p "Confirm password: " confirm_password
-                echo
-                if [ "$new_password" != "$confirm_password" ]; then
-                    echo "Passwords do not match. Please try again."
-                else
-                    break
-                fi
-            done
-            useradd -m -s /bin/bash "$new_username"
-            echo "$new_username:$new_password" | chpasswd
-            usermod -aG sudo "$new_username"
-            printf '\nNew user created and added to sudoers group\n\n'
-            echo "You can now log in with the username $new_username instead of root";;
-        * )
-            echo "Skipping user creation."
-            ;;
-    esac
-}
-
-sleep 10
-
-# Function for logging
-log() {
-    echo "$(date): $1" >> installation_log.txt
-}
-
-# Display message
-echo "First, we will run updates and install curl."
-log "Running updates and installing curl."
-
-# Update package repository
-apt update
-apt install curl -y
-printf '\nCurl installed successfully\n\n'
-log "Updates completed. Curl installed."
-
-# Define options
-install_options=("sudo" "docker" "docker-compose" "portainer")
-
-# Prompt user with checkboxes
-selected_options=($(prompt_checkbox "${install_options[@]}"))
-
-# Install selected options
-for option in "${selected_options[@]}"; do
-    case $option in
-        "sudo" )
-            apt install sudo -y
-            printf '\nSudo installed successfully\n\n'
-            log "Sudo installed."
-            create_new_user;;  # Prompt to create a new user after installing sudo
-        "docker" )
-            curl -fsSL https://get.docker.com -o get-docker.sh
-            sh get-docker.sh
-            printf '\nDocker installed successfully\n\n'
-            log "Docker installed.";;
-        "docker-compose" )
-            COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
-            sudo curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
-            sudo curl -L https://raw.githubusercontent.com/docker/compose/${COMPOSE_VERSION}/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
-            printf '\nDocker Compose installed successfully\n\n'
-            log "Docker Compose installed."
-            usermod -aG docker "$new_username"
-            printf '\nNew sudo user added to the docker group\n\n';;
-        "portainer" )
-            docker run -d -p 8000:8000 -p 9443:9443 --name portainer --restart=always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer-ce:latest
-            printf '\nPortainer installed successfully\n\n'
-            log "Portainer installed.";;
-    esac
-done
-
-# Final message
-echo "Installation completed successfully. Check installation_log.txt for details."
-echo ""
-echo "Network IP Information:"
-ip a
-echo ""
-echo "Non-sudo user PUID and PGID: "
-id $new_username
-log "Installation completed successfully."
+    useradd -m -s /bin/bash $username
+    echo "$username:$password" | sudo chpasswd
+    usermod -aG sudo,docker $username
+    echo "User $username has been created and added to sudo and docker groups."
+fi
